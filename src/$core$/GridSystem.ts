@@ -16,6 +16,7 @@ class GridSystemElement extends HTMLElement {
         if (!this.#initialized) {
             this.#initialized = true;
             this.dataset.hidden = "true";
+            this.classList.add("u2-grid-layout");
 
             //
             const shadow = this.attachShadow({mode: 'open'});

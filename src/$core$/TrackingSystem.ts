@@ -5,11 +5,16 @@ import {subscribe} from "/externals/lib/object.js";
 import AxGesture, {grabForDrag} from "/externals/lib/interact.js";
 
 // @ts-ignore
+import {onContentObserve, unfixedClientZoom} from "/externals/lib/dom.js";
+
+// @ts-ignore
 import {
     redirectCell,
     relativeToAbsoluteInPx,
     absolutePxToRelativeInOrientPx,
-    convertOrientPxToCX
+    convertOrientPxToCX,
+    animationSequence,
+    convertPointerPxToOrientPx
 // @ts-ignore
 } from "/externals/lib/grid.js";
 
@@ -24,15 +29,15 @@ const setProperty = (element, name, value)=>{
 //
 export const trackItemState = (element, item, [value, name])=>{
     if (name == "cell") {
-        setProperty(element, "--p-cell-x", element.style.getPropertyValue("--p-cell-x"));
-        setProperty(element, "--p-cell-y", element.style.getPropertyValue("--p-cell-y"));
+        setProperty(element, "--p-cell-x", element.style.getPropertyValue("--cell-x"));
+        setProperty(element, "--p-cell-y", element.style.getPropertyValue("--cell-y"));
         setProperty(element, "--cell-x", value[0]);
         setProperty(element, "--cell-y", value[1]);
 
         // may be reactive
         subscribe(value, (value, name)=>{
-            if (name == 0) { setProperty(element, "--p-cell-x", element.style.getPropertyValue("--p-cell-x")); setProperty(element, "--cell-x", value[0]); };
-            if (name == 1) { setProperty(element, "--p-cell-y", element.style.getPropertyValue("--p-cell-y")); setProperty(element, "--cell-y", value[1]); };
+            if (name == 0) { setProperty(element, "--p-cell-x", element.style.getPropertyValue("--cell-x")); setProperty(element, "--cell-x", value[0]); };
+            if (name == 1) { setProperty(element, "--p-cell-y", element.style.getPropertyValue("--cell-y")); setProperty(element, "--cell-y", value[1]); };
         });
     }
 
@@ -45,7 +50,27 @@ export const trackItemState = (element, item, [value, name])=>{
 }
 
 //
-export const inflectInGrid = (gridSystem, items, page = {}, itemTag = "div")=>{
+export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div")=>{
+
+    //
+    subscribe(page, (value, prop)=>{
+        //
+        if (prop == "layout") {
+            setProperty(gridSystem, "--layout-c", value[0]);
+            setProperty(gridSystem, "--layout-r", value[1]);
+
+            //
+            subscribe(value, (num, index)=>{
+                if (index == 0) setProperty(gridSystem, "--layout-c", num);
+                if (index == 1) setProperty(gridSystem, "--layout-r", num);
+            });
+        }
+    });
+
+    //
+    onContentObserve(gridSystem, (boxSize)=>{
+        if (page) { page.size = matchMedia("(orientation: landscape)").matches ? [boxSize.inlineSize, boxSize.blockSize] : [boxSize.blockSize, boxSize.inlineSize]; };
+    });
 
     //
     subscribe(items, (item, index, old)=>{
@@ -82,20 +107,34 @@ export const inflectInGrid = (gridSystem, items, page = {}, itemTag = "div")=>{
 
             //
             newItem.addEventListener("m-dragstart", (ev)=>{
+                const cbox = newItem?.getBoundingClientRect?.();
+                const pbox = gridSystem?.getBoundingClientRect?.();
+                const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
+                const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
+
+                //
                 const args = {item, page, items};
-                item.cell = redirectCell(item.cell, args);
+                const orient = convertPointerPxToOrientPx(cent, args);
+                const CXa    = convertOrientPxToCX(orient, args);
+
+                //
+                item.cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
+                setProperty(newItem, "--p-cell-x", newItem.style.getPropertyValue("--cell-x"));
+                setProperty(newItem, "--p-cell-y", newItem.style.getPropertyValue("--cell-y"));
             });
 
             //
             newItem.addEventListener("m-dragging", (ev)=>{
                 const pointer = ev.detail.pointer;
                 const current = pointer.current;
+
+                //
                 setProperty(newItem, "--drag-x", current[0]);
                 setProperty(newItem, "--drag-y", current[1]);
             });
 
             //
-            newItem.addEventListener("m-dragend", (ev)=>{
+            newItem.addEventListener("m-dragend", async (ev)=>{
                 const pointer = ev.detail.pointer;
                 const current = pointer.current;
                 const args = {item, page, items};
@@ -107,6 +146,17 @@ export const inflectInGrid = (gridSystem, items, page = {}, itemTag = "div")=>{
 
                 //
                 item.cell = redirectCell(preCell, args);
+
+                //
+                await newItem.animate(animationSequence(), {
+                    fill: "none",
+                    duration: 150,
+                    easing: "linear"
+                }).finished;
+
+                //
+                setProperty(newItem, "--drag-x", 0);
+                setProperty(newItem, "--drag-y", 0);
             });
         } else {
             const oldItem = gridSystem.querySelector(`.u2-grid-item[data-id=\"${old?.id}\"]`);

@@ -1,5 +1,5 @@
 // @ts-ignore /* @vite-ignore */
-import {subscribe as $subscribe$} from "/externals/lib/object.js";
+import {subscribe} from "/externals/lib/object.js";
 
 // @ts-ignore /* @vite-ignore */
 import AxGesture, {grabForDrag} from "/externals/lib/interact.js";
@@ -27,57 +27,59 @@ const setProperty = (element, name, value)=>{
 }
 
 //
-export const trackItemState = (element, item, [value, name], subscribe = $subscribe$)=>{
-    if (name == "cell") {
-        setProperty(element, "--cell-x", value[0]);
-        setProperty(element, "--cell-y", value[1]);
+const whenChangedCell = (element, cell)=>{
+    setProperty(element, "--cell-x", cell[0]);
+    setProperty(element, "--cell-y", cell[1]);
 
-        // may be reactive
-        subscribe(value, (value, name)=>{
-            if (name == 0) { setProperty(element, "--cell-x", value[0]); };
-            if (name == 1) { setProperty(element, "--cell-y", value[1]); };
-        });
+    // may be reactive
+    subscribe(cell, (value, name)=>{
+        if (name == 0) { setProperty(element, "--cell-x", value); };
+        if (name == 1) { setProperty(element, "--cell-y", value); };
+    });
+}
+
+//
+const whenChangedLayout = (gridSystem, layout)=>{
+    setProperty(gridSystem, "--layout-c", layout[0]);
+    setProperty(gridSystem, "--layout-r", layout[1]);
+
+    // may be reactive
+    subscribe(layout, (num, index)=>{
+        if (index == 0) setProperty(gridSystem, "--layout-c", num);
+        if (index == 1) setProperty(gridSystem, "--layout-r", num);
+    });
+}
+
+//
+export const trackItemState = (element, item, [value, prop])=>{
+    if (prop == "cell") {
+        whenChangedCell(element, value);
     }
 
     //
     element.dispatchEvent(new CustomEvent("u2-item-state-change", {
-        detail: {item, value, name},
+        detail: {item, value, prop},
         bubbles: true,
         cancelable: true
     }));
 }
 
 //
-/*document.addEventListener("pointerdown", (ev)=>{
-    const newItem = MOCElement(ev.target, ".u2-grid-item");
-    if (newItem) grabForDrag(newItem, ev);
-});*/
-
-//
-export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div", subscribe = $subscribe$)=>{
-
+export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div")=>{
     //
+    whenChangedLayout(gridSystem, page.layout);
     subscribe(page, (value, prop)=>{
-        //
-        if (prop == "layout") {
-            setProperty(gridSystem, "--layout-c", value[0]);
-            setProperty(gridSystem, "--layout-r", value[1]);
-
-            //
-            subscribe(value, (num, index)=>{
-                if (index == 0) setProperty(gridSystem, "--layout-c", num);
-                if (index == 1) setProperty(gridSystem, "--layout-r", num);
-            });
-        }
+        if (prop == "layout") { whenChangedLayout(gridSystem, value); };
+        gridSystem.dispatchEvent(new CustomEvent("u2-grid-state-change", {
+            detail: {page, value, prop},
+            bubbles: true,
+            cancelable: true
+        }));
     });
 
     //
-    setProperty(gridSystem, "--layout-c", page.layout[0]);
-    setProperty(gridSystem, "--layout-r", page.layout[1]);
     observeContentBox(gridSystem, (boxSize)=>{
-        //if (page) { page.size = matchMedia("(orientation: landscape)").matches ? [boxSize.inlineSize, boxSize.blockSize] : [boxSize.blockSize, boxSize.inlineSize]; };
-        //if (page) { page.size = matchMedia("(orientation: portrait)").matches ? [boxSize.inlineSize, boxSize.blockSize] : [boxSize.blockSize, boxSize.inlineSize]; };
-        if (page) page.size = [boxSize.inlineSize, boxSize.blockSize];
+        if (page) { page.size = [boxSize.inlineSize, boxSize.blockSize]; };
     });
 
     //
@@ -96,20 +98,11 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div"
 
         //
         gridSystem.appendChild(newItem);
-        subscribe(item, (state, property)=>{
-            trackItemState(newItem, item, [state, property], subscribe);
-        });
 
         //
-        setProperty(newItem, "--p-cell-x", item.cell[0]);
-        setProperty(newItem, "--p-cell-y", item.cell[1]);
-        setProperty(newItem, "--cell-x", item.cell[0]);
-        setProperty(newItem, "--cell-y", item.cell[1]);
-
-        // may be reactive
-        subscribe(item.cell, (value, name)=>{
-            if (name == 0) { setProperty(newItem, "--cell-x", value); };
-            if (name == 1) { setProperty(newItem, "--cell-y", value); };
+        whenChangedCell(newItem, item.cell);
+        subscribe(item, (state, property)=>{
+            trackItemState(newItem, item, [state, property]);
         });
 
         //
@@ -121,10 +114,16 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div"
 
         //
         const gesture = new AxGesture(newItem);
-        //gesture.longPress({}, (ev)=>{ grabForDrag(newItem, ev); });
-        newItem.addEventListener("pointerdown", (ev)=>{
+        gesture.longPress({
+            handler: "*",
+            anyPointer: true,
+            mouseImmediate: true,
+            minHoldTime: 60 * 3600,
+            maxHoldTime: 100
+        }, (ev)=>{ grabForDrag(newItem, ev); });
+        /*newItem.addEventListener("pointerdown", (ev)=>{
             grabForDrag(newItem, ev);
-        });
+        });*/
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{

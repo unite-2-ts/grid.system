@@ -19,15 +19,7 @@ import {
 } from "/externals/core/grid.js";
 
 //
-import $createItem, { whenChangedCell } from "./DefaultItem";
-
-//
-export const setProperty = (element, name, value)=>{
-    const oldVal = element.style.getPropertyValue(name);
-    if (oldVal != value || !oldVal) {
-        element.style.setProperty(name, value);
-    }
-}
+import $createItem, { setProperty } from "./DefaultItem";
 
 //
 const whenChangedLayout = (gridSystem, layout)=>{
@@ -35,18 +27,18 @@ const whenChangedLayout = (gridSystem, layout)=>{
     setProperty(gridSystem, "--layout-r", layout[1]);
 
     // may be reactive
-    subscribe(layout, (num, index)=>{
-        if (index == 0) setProperty(gridSystem, "--layout-c", num);
-        if (index == 1) setProperty(gridSystem, "--layout-r", num);
-    });
+    //subscribe([layout, 0], (v)=>setProperty(gridSystem, "--layout-c", v));
+    //subscribe([layout, 1], (v)=>setProperty(gridSystem, "--layout-r", v));
+    subscribe(layout, (v,p)=>setProperty(gridSystem, ["--layout-c","--layout-r"][parseInt(p)], v));
 }
 
 //
 export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $createItem)=>{
-    //
     whenChangedLayout(gridSystem, page.layout);
+
+    //
+    subscribe([page, "layout"], (v)=>whenChangedLayout(gridSystem, v));
     subscribe(page, (value, prop)=>{
-        if (prop == "layout") { whenChangedLayout(gridSystem, value); };
         gridSystem.dispatchEvent(new CustomEvent("u2-grid-state-change", {
             detail: {page, value, prop},
             bubbles: true,

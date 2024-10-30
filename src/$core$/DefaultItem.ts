@@ -15,10 +15,9 @@ export const whenChangedCell = (element, cell)=>{
     setProperty(element, "--cell-y", cell[1]);
 
     // may be reactive
-    subscribe(cell, (value, name)=>{
-        if (name == 0) { setProperty(element, "--cell-x", value); };
-        if (name == 1) { setProperty(element, "--cell-y", value); };
-    });
+    subscribe(cell, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v));
+    //subscribe([cell, 0], (v)=>setProperty(element, "--cell-x", v));
+    //subscribe([cell, 1], (v)=>setProperty(element, "--cell-y", v));
 }
 
 //

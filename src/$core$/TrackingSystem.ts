@@ -141,6 +141,9 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div"
             item.cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
             setProperty(newItem, "--p-cell-x", item.cell[0]);
             setProperty(newItem, "--p-cell-y", item.cell[1]);
+
+            //
+            newItem.dataset.dragging = "true";
         });
 
         //
@@ -158,6 +161,9 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div"
             const pointer = ev.detail.holding;
             const drag = [parseInt(newItem.style.getPropertyValue("--drag-x")), parseInt(newItem.style.getPropertyValue("--drag-y"))];//pointer.modified;
             const args = {item, page, items};
+
+            //
+            delete newItem.dataset.dragging;
 
             //
             const orient = convertPointerPxToOrientPx(relativeToAbsoluteInPx([drag[0], drag[1]], args), args);

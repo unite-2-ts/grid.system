@@ -33,6 +33,13 @@ const whenChangedLayout = (gridSystem, layout)=>{
 }
 
 //
+const getSpan = (el, ax)=>{
+    const prop = el.style.getPropertyValue(["--ox-c-span", "--ox-r-span"][ax]);
+    const factor = ((parseFloat(prop || "1") || 1) - 1);
+    return Math.min(Math.max(factor-1, 0), 1);
+}
+
+//
 export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $createItem)=>{
     whenChangedLayout(gridSystem, page.layout);
 
@@ -67,6 +74,8 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
         newItem.addEventListener("m-dragstart", (ev)=>{
             const cbox = newItem?.getBoundingClientRect?.();
             const pbox = gridSystem?.getBoundingClientRect?.();
+
+            //
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
             const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
 
@@ -76,7 +85,7 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const CXa    = convertOrientPxToCX(orient, args);
 
             //
-            item.cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
+            item.cell = redirectCell([Math.floor(CXa[0] - getSpan(newItem, 0)), Math.floor(CXa[1] - getSpan(newItem, 1))], args);
             setProperty(newItem, "--p-cell-x", item.cell[0]);
             setProperty(newItem, "--p-cell-y", item.cell[1]);
 

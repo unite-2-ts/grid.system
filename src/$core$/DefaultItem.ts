@@ -50,6 +50,10 @@ export const createItem = (item, gridSystem)=>{
     newItem.dataset.id = id;
 
     //
+    newItem.style.setProperty("--ox-r-span", "1");
+    newItem.style.setProperty("--ox-c-span", "1");
+
+    //
     gridSystem?.appendChild?.(newItem);
 
     //

@@ -18,7 +18,7 @@ const page = {
 };
 
 //
-const items = makeReactive([
+const items = makeReactive(new Set([
     makeObjectAssignable(makeReactive({
         id: "github",
         name: "GitHub",
@@ -34,7 +34,7 @@ const items = makeReactive([
         name: "Settings",
         cell: makeObjectAssignable(makeReactive([2, 0]))
     }))
-]);
+]));
 
 //
 document.addEventListener("u2-item-added", (ev)=>{
@@ -43,10 +43,8 @@ document.addEventListener("u2-item-added", (ev)=>{
     console.log(element);
 });
 
-
 //
 const gridSystem = document.querySelector("u-gridbox");
 
 //
-inflectInGrid(gridSystem, items, page, "div", subscribe);
-
+inflectInGrid(gridSystem, items, page);

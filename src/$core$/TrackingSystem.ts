@@ -83,7 +83,6 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, itemTag = "div"
     //
     const createItem = (item)=>{
         const id = item?.id;
-        console.log(item);
 
         // if exists, skip
         if (gridSystem.querySelector(`.u2-grid-item[data-id=\"${item?.id}\"]`)) {

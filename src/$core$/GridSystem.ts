@@ -53,3 +53,16 @@ customElements.define("u-grid-system", GridSystemElement);
 //
 export default () => {};
 export { GridSystemElement };
+
+//
+const loadBlobStyle = (preInit: string)=>{
+    const style = document.createElement("link");
+    style.rel = "stylesheet";
+    style.type = "text/css";
+    style.href = preInit;
+    document.head.appendChild(style);
+    return style;
+}
+
+//
+loadBlobStyle(preInit);

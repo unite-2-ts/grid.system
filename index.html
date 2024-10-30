@@ -4,13 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+
+    <style>
+        body, html {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        body, html {
+            inline-size: 100dvi;
+            block-size: 100dvb;
+            max-inline-size: 100dvi;
+            max-block-size: 100dvb;
+        }
+
+        .u2-test-handler {
+            cursor: grab;
+            inline-size: 60px;
+            block-size: 60px;
+            background-color: black;
+            aspect-ratio: 1 / 1;
+            pointer-events: auto;
+        }
+    </style>
 </head>
 <body>
 
-    <script src="./test/CtxTest.ts" type="module"></script>
-
-    <u-grid-system style="inline-size: 128px;">
+    <u-grid-system style="inline-size: 100%; block-size: 100%;">
     </u-grid-system>
+
+    <script src="./test/GridTest.mjs" type="module"></script>
+
 
 </body>
 </html>

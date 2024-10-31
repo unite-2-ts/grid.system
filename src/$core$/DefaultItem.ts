@@ -11,9 +11,6 @@ export const setProperty = (element, name, value)=>{
 
 //
 export const whenChangedCell = (element, cell)=>{
-    setProperty(element, "--cell-x", cell[0]);
-    setProperty(element, "--cell-y", cell[1]);
-
     // may be reactive
     subscribe(cell, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v));
     //subscribe([cell, 0], (v)=>setProperty(element, "--cell-x", v));
@@ -57,7 +54,7 @@ export const createItem = (item, gridSystem)=>{
     gridSystem?.appendChild?.(newItem);
 
     //
-    whenChangedCell(newItem, item.cell);
+    //whenChangedCell(newItem, item.cell);
     subscribe(item, (state, property)=>trackItemState(newItem, item, [state, property]));
 
     //

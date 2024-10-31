@@ -23,9 +23,6 @@ import $createItem, { setProperty } from "./DefaultItem";
 
 //
 const whenChangedLayout = (gridSystem, layout)=>{
-    setProperty(gridSystem, "--layout-c", layout[0]);
-    setProperty(gridSystem, "--layout-r", layout[1]);
-
     // may be reactive
     //subscribe([layout, 0], (v)=>setProperty(gridSystem, "--layout-c", v));
     //subscribe([layout, 1], (v)=>setProperty(gridSystem, "--layout-r", v));
@@ -41,7 +38,7 @@ const getSpan = (el, ax)=>{
 
 //
 export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $createItem)=>{
-    whenChangedLayout(gridSystem, page.layout);
+    //whenChangedLayout(gridSystem, page.layout);
 
     //
     subscribe([page, "layout"], (v)=>whenChangedLayout(gridSystem, v));
@@ -143,7 +140,7 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
     }
 
     //
-    const elements = Array.from(items.values()).map((item)=>bindInternal(createItem(item, gridSystem), item));
+    const elements: HTMLElement[] = [];//Array.from(items.values()).map((item)=>bindInternal(createItem(item, gridSystem), item));
 
     //
     subscribe(items, (item, index, old)=>{

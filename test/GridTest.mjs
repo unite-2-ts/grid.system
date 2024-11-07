@@ -11,6 +11,9 @@ import init from "/externals/core/grid.js"; await init();
 import {inflectInGrid} from "../dist/grid-system.js";
 
 //
+import {makeSelection} from "/externals/lib/interact.js";
+
+//
 const page = {
     layout: [4, 8],
     size: [0, 0],
@@ -48,3 +51,14 @@ const gridSystem = document.querySelector("u-gridbox");
 
 //
 inflectInGrid(gridSystem, items, page);
+
+//
+const s_box = document.body;
+
+//
+makeSelection(s_box, ".u2-grid-item");
+
+//
+s_box.addEventListener("u2-selected", (ev)=>{
+    console.log(ev.detail.selected);
+});

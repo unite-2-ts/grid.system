@@ -65,20 +65,27 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             mouseImmediate: true,
             minHoldTime: 60 * 3600,
             maxHoldTime: 100
-        }, (ev)=>{ grabForDrag(newItem, ev); });
+        }, (ev)=>{
+            if (!newItem.dataset.dragging)
+            {
+                grabForDrag(newItem, ev, {
+                    propertyName: "drag",
+                    shifting: [
+                        parseFloat(newItem?.style?.getPropertyValue("--drag-x")) || 0,
+                        parseFloat(newItem?.style?.getPropertyValue("--drag-y")) || 0
+                    ],
+                });
+            }
+        });
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{
-            //
-            setProperty(newItem, "--p-cell-x", item.cell[0]);
-            setProperty(newItem, "--p-cell-y", item.cell[1]);
-
-            //
             const cbox = newItem?.getBoundingClientRect?.();
             const pbox = gridSystem?.getBoundingClientRect?.();
 
             //
             const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
+            //const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
             const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
 
             //
@@ -87,9 +94,22 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const CXa    = convertOrientPxToCX(orient, args);
 
             //
-            item.cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
-            setProperty(newItem, "--p-cell-x", item.cell[0]);
-            setProperty(newItem, "--p-cell-y", item.cell[1]);
+            const prev = [item.cell[0], item.cell[1]];
+            const cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
+
+            //
+            if (prev[0] != cell[0] || prev[1] != cell[1]) {
+                if (ev?.detail?.holding?.modified != null) {
+                    setProperty(newItem, "--drag-x", ev.detail.holding.modified[0] = 0);
+                    setProperty(newItem, "--drag-y", ev.detail.holding.modified[1] = 0);
+                } else {
+                    setProperty(newItem, "--drag-x", 0);
+                    setProperty(newItem, "--drag-y", 0);
+                }
+                item.cell = cell;
+                setProperty(newItem, "--p-cell-x", cell[0]);
+                setProperty(newItem, "--p-cell-y", cell[1]);
+            }
 
             //
             newItem.dataset.dragging = "true";
@@ -108,49 +128,59 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const args = {item, page, items};
 
             //
-            delete newItem.dataset.dragging;
-
-            //
             const orient = convertPointerPxToOrientPx(relativeToAbsoluteInPx([drag[0], drag[1]], args), args);
             const CXa = convertOrientPxToCX(orient, args);
 
-            // set previous cell in style
-            setProperty(newItem, "--p-cell-x", item.cell[0]);
-            setProperty(newItem, "--p-cell-y", item.cell[1]);
-
             //
-            item.cell = redirectCell([Math.round(CXa[0]), Math.round(CXa[1])], args);
+            const prev = [item.cell[0], item.cell[1]];
+            const cell = redirectCell([Math.round(CXa[0]), Math.round(CXa[1])], args);
             const animation = newItem.animate(animationSequence(), {
-                fill: "forwards",
+                fill: "both",
                 duration: 150,
                 easing: "linear"
             });
 
             //
             let shifted = false;
-            const onShift: [any, any] = [()=>{
+            const onShift: [any, any] = [(ev)=>{
                 if (!shifted) {
+                    shifted = true;
                     animation?.commitStyles?.();
                     animation?.cancel?.();
-
-                    //
-                    setProperty(newItem, "--drag-x", 0);
-                    setProperty(newItem, "--drag-y", 0);
-                    setProperty(newItem, "--p-cell-x", item.cell[0]);
-                    setProperty(newItem, "--p-cell-y", item.cell[1]);
-
-                    //
-                    shifted = true;
-                    newItem?.removeEventListener?.("m-dragstart", ...onShift);
                 }
+
+                //
+                newItem?.removeEventListener?.("m-dragstart", ...onShift);
             }, {once: true}];
+
+            // not fact, but for animation
+            setProperty(newItem, "--p-cell-x", prev[0]);
+            setProperty(newItem, "--p-cell-y", prev[1]);
+            setProperty(newItem, "--cell-x", cell[0]);
+            setProperty(newItem, "--cell-y", cell[1]);
 
             //
             newItem?.addEventListener?.("m-dragstart", ...onShift);
             await animation?.finished?.catch?.(console.warn.bind(console));
 
-            // commit dragging result
-            onShift?.[0]?.();
+            //
+            if (!shifted) {
+                // commit dragging result
+                item.cell = cell;
+                onShift?.[0]?.();
+
+                //
+                if (ev?.detail?.holding?.modified != null) {
+                    setProperty(newItem, "--drag-x", ev.detail.holding.modified[0] = 0);
+                    setProperty(newItem, "--drag-y", ev.detail.holding.modified[1] = 0);
+                } else {
+                    setProperty(newItem, "--drag-x", 0);
+                    setProperty(newItem, "--drag-y", 0);
+                }
+
+                //
+                delete newItem.dataset.dragging;
+            }
         });
 
         //

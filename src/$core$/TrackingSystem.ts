@@ -107,8 +107,8 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
                     setProperty(newItem, "--drag-y", 0);
                 }
                 item.cell = cell;
-                setProperty(newItem, "--p-cell-x", cell[0]);
-                setProperty(newItem, "--p-cell-y", cell[1]);
+                setProperty(newItem, "--p-cell-x", item.cell[0]);
+                setProperty(newItem, "--p-cell-y", item.cell[1]);
             }
 
             //
@@ -132,9 +132,9 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const CXa = convertOrientPxToCX(orient, args);
 
             //
-            const prev = [item.cell[0], item.cell[1]];
+            //const prev = [item.cell[0], item.cell[1]];
             const cell = redirectCell([Math.round(CXa[0]), Math.round(CXa[1])], args);
-            const animation = newItem.animate(animationSequence(), {
+            const animation = newItem.animate(animationSequence(drag, item.cell, cell), {
                 fill: "both",
                 duration: 150,
                 easing: "linear"
@@ -145,7 +145,7 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const onShift: [any, any] = [(ev)=>{
                 if (!shifted) {
                     shifted = true;
-                    animation?.commitStyles?.();
+                    //animation?.commitStyles?.();
                     animation?.cancel?.();
                 }
 
@@ -154,13 +154,16 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             }, {once: true}];
 
             // not fact, but for animation
-            setProperty(newItem, "--p-cell-x", prev[0]);
-            setProperty(newItem, "--p-cell-y", prev[1]);
+            setProperty(newItem, "--p-cell-x", item.cell[0]);
+            setProperty(newItem, "--p-cell-y", item.cell[1]);
+
+            //
             setProperty(newItem, "--cell-x", cell[0]);
             setProperty(newItem, "--cell-y", cell[1]);
 
             //
             newItem?.addEventListener?.("m-dragstart", ...onShift);
+            //await new Promise((r)=>requestAnimationFrame(r));
             await animation?.finished?.catch?.(console.warn.bind(console));
 
             //
@@ -168,6 +171,10 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
                 // commit dragging result
                 item.cell = cell;
                 onShift?.[0]?.();
+
+                //
+                setProperty(newItem, "--p-cell-x", item.cell[0]);
+                setProperty(newItem, "--p-cell-y", item.cell[1]);
 
                 //
                 if (ev?.detail?.holding?.modified != null) {

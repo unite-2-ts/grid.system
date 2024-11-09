@@ -2,12 +2,25 @@
 import {subscribe} from "/externals/lib/object.js";
 
 //
-export const setProperty = (element, name, value)=>{
-    const oldVal = element.style.getPropertyValue(name);
-    if (oldVal != value || !oldVal) {
-        element.style.setProperty(name, value);
+export const setProperty = (target, name, value, importance = "")=>{
+    if ("attributeStyleMap" in target) {
+        const raw = target.attributeStyleMap.get(name);
+        const prop = raw?.[0] ?? raw?.value;
+        if (parseFloat(prop) != value && prop != value || prop == null) {
+            //if (raw?.[0] != null) { raw[0] = value; } else
+            if (raw?.value != null) { raw.value = value; } else
+            { target.attributeStyleMap.set(name, value); };
+        }
+    } else
+    {
+        const prop = target?.style?.getPropertyValue?.(name);
+        if (parseFloat(prop) != value && prop != value || prop == null) {
+            target.style.setProperty(name, value, importance);
+        }
     }
 }
+
+
 
 //
 export const whenChangedCell = (element, cell)=>{

@@ -43,7 +43,7 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
     //
     subscribe([page, "layout"], (v)=>whenChangedLayout(gridSystem, v));
     subscribe(page, (value, prop)=>{
-        gridSystem.dispatchEvent(new CustomEvent("u2-grid-state-change", {
+        gridSystem?.dispatchEvent?.(new CustomEvent("u2-grid-state-change", {
             detail: {page, value, prop},
             bubbles: true,
             cancelable: true
@@ -69,11 +69,16 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{
+            //
+            setProperty(newItem, "--p-cell-x", item.cell[0]);
+            setProperty(newItem, "--p-cell-y", item.cell[1]);
+
+            //
             const cbox = newItem?.getBoundingClientRect?.();
             const pbox = gridSystem?.getBoundingClientRect?.();
 
             //
-            const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
+            const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
             const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
 
             //
@@ -82,7 +87,7 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const CXa    = convertOrientPxToCX(orient, args);
 
             //
-            item.cell = redirectCell([Math.floor(CXa[0] - getSpan(newItem, 0)), Math.floor(CXa[1] - getSpan(newItem, 1))], args);
+            item.cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
             setProperty(newItem, "--p-cell-x", item.cell[0]);
             setProperty(newItem, "--p-cell-y", item.cell[1]);
 
@@ -115,21 +120,41 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
 
             //
             item.cell = redirectCell([Math.round(CXa[0]), Math.round(CXa[1])], args);
-            await newItem.animate(animationSequence(), {
-                fill: "none",
+            const animation = newItem.animate(animationSequence(), {
+                fill: "forwards",
                 duration: 150,
                 easing: "linear"
-            }).finished;
+            });
 
-            // update previous and reset drag state
-            setProperty(newItem, "--drag-x", 0);
-            setProperty(newItem, "--drag-y", 0);
-            setProperty(newItem, "--p-cell-x", item.cell[0]);
-            setProperty(newItem, "--p-cell-y", item.cell[1]);
+            //
+            let shifted = false;
+            const onShift: [any, any] = [()=>{
+                if (!shifted) {
+                    animation?.commitStyles?.();
+                    animation?.cancel?.();
+
+                    //
+                    setProperty(newItem, "--drag-x", 0);
+                    setProperty(newItem, "--drag-y", 0);
+                    setProperty(newItem, "--p-cell-x", item.cell[0]);
+                    setProperty(newItem, "--p-cell-y", item.cell[1]);
+
+                    //
+                    shifted = true;
+                    newItem?.removeEventListener?.("m-dragstart", ...onShift);
+                }
+            }, {once: true}];
+
+            //
+            newItem?.addEventListener?.("m-dragstart", ...onShift);
+            await animation?.finished?.catch?.(console.warn.bind(console));
+
+            // commit dragging result
+            onShift?.[0]?.();
         });
 
         //
-        newItem.dispatchEvent(new CustomEvent("u2-item-added", {
+        newItem?.dispatchEvent?.(new CustomEvent("u2-item-added", {
             detail: {item},
             bubbles: true,
             cancelable: true
@@ -155,7 +180,7 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
                 if (idx >= 0) { elements.splice(idx, 1); };
 
                 //
-                oldItem.dispatchEvent(new CustomEvent("u2-item-removed", {
+                oldItem?.dispatchEvent?.(new CustomEvent("u2-item-removed", {
                     detail: {item},
                     bubbles: true,
                     cancelable: true

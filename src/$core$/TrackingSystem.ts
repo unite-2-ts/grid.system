@@ -19,7 +19,7 @@ import {
 } from "/externals/core/grid.js";
 
 //
-import $createItem, { setProperty } from "./DefaultItem";
+import $createItem, { setProperty, trackItemState } from "./DefaultItem";
 
 //
 const whenChangedLayout = (gridSystem, layout)=>{
@@ -200,8 +200,21 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
     //
     subscribe(items, (item, index, old)=>{
         if (item) {
-            const newItem = bindInternal(createItem(item, gridSystem), item);
-            elements.push(newItem);
+            const newItem = createItem(item, gridSystem);
+            const id = item?.id; newItem.dataset.id = id;
+            if (!newItem.classList.contains('u2-grid-item')) {
+                newItem.classList.add('u2-grid-item');
+            }
+
+            //
+            if (!gridSystem?.contains?.(newItem)) {
+                gridSystem?.appendChild?.(newItem);
+                bindInternal(newItem, item);
+                subscribe(item, (state, property)=>trackItemState(newItem, item, [state, property]));
+            }
+
+            //
+            if (elements.indexOf(newItem) < 0) { elements.push(newItem); };
         } else {
             const oldItem = gridSystem.querySelector(`.u2-grid-item[data-id=\"${old?.id}\"]`);
             if (oldItem) {

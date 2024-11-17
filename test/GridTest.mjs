@@ -47,7 +47,7 @@ document.addEventListener("u2-item-added", (ev)=>{
 });
 
 //
-const gridSystem = document.querySelector("u-gridbox");
+const gridSystem = document.querySelector("ui-gridbox");
 
 //
 inflectInGrid(gridSystem, items, page.list);

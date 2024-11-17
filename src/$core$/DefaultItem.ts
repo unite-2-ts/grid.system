@@ -22,7 +22,7 @@ export const setProperty = (target, name, value, importance = "")=>{
 
 //
 export const trackItemState = (element, item, [value, prop])=>{
-    if (prop == "cell") { subscribe(value, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v)); }
+    if (prop == "cell") { subscribe(value, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v)); } else
     if (prop == "id") { element.dataset[prop] = value; } else { element[prop] = value; };
 
     //

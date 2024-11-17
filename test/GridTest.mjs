@@ -50,7 +50,7 @@ document.addEventListener("u2-item-added", (ev)=>{
 const gridSystem = document.querySelector("u-gridbox");
 
 //
-inflectInGrid(gridSystem, items, page);
+inflectInGrid(gridSystem, items, page.list);
 
 //
 const s_box = document.body;

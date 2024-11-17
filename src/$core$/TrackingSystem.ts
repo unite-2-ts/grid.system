@@ -22,12 +22,12 @@ import {
 import $createItem, { setProperty, trackItemState } from "./DefaultItem";
 
 //
-const whenChangedLayout = (gridSystem, layout)=>{
+//const whenChangedLayout = (gridSystem, layout)=>{
     // may be reactive
     //subscribe([layout, 0], (v)=>setProperty(gridSystem, "--layout-c", v));
     //subscribe([layout, 1], (v)=>setProperty(gridSystem, "--layout-r", v));
-    subscribe(layout, (v,p)=>setProperty(gridSystem, ["--layout-c","--layout-r"][parseInt(p)], v));
-}
+    //subscribe(layout, (v,p)=>setProperty(gridSystem, ["--layout-c","--layout-r"][parseInt(p)], v));
+//}
 
 //
 const getSpan = (el, ax)=>{
@@ -37,23 +37,26 @@ const getSpan = (el, ax)=>{
 }
 
 //
-export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $createItem)=>{
-    //whenChangedLayout(gridSystem, page.layout);
-
-    //
-    subscribe([page, "layout"], (v)=>whenChangedLayout(gridSystem, v));
+export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = [], createItem = $createItem)=>{
+    /*subscribe([page, "layout"], (v)=>whenChangedLayout(gridSystem, v));
     subscribe(page, (value, prop)=>{
         gridSystem?.dispatchEvent?.(new CustomEvent("u2-grid-state-change", {
             detail: {page, value, prop},
             bubbles: true,
             cancelable: true
         }));
+    });*/
+
+    //
+    const size = [0, 0], layout = [4, 8];
+    observeContentBox(gridSystem, (boxSize)=>{
+        size[0] = boxSize.inlineSize;
+        size[1] = boxSize.blockSize;
     });
 
     //
-    observeContentBox(gridSystem, (boxSize)=>{
-        if (page) { page.size = [boxSize.inlineSize, boxSize.blockSize]; };
-    });
+    setProperty(gridSystem, "--layout-c", layout[0] = gridSystem.style.getPropertyValue("--layout-c") || layout[0]);
+    setProperty(gridSystem, "--layout-r", layout[1] = gridSystem.style.getPropertyValue("--layout-r") || layout[1]);
 
     //
     const bindInternal = (newItem, item)=>{
@@ -84,12 +87,16 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
             const pbox = gridSystem?.getBoundingClientRect?.();
 
             //
-            const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
             //const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
+            const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
             const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
 
             //
-            const args = {item, page, items};
+            layout[0] = gridSystem.style.getPropertyValue("--layout-c") || layout[0];
+            layout[1] = gridSystem.style.getPropertyValue("--layout-r") || layout[1];
+
+            //
+            const args   = {item, list, items, layout, size};
             const orient = convertPointerPxToOrientPx(cent, args);
             const CXa    = convertOrientPxToCX(orient, args);
 
@@ -125,11 +132,15 @@ export const inflectInGrid = (gridSystem, items, page: any = {}, createItem = $c
         newItem.addEventListener("m-dragend", async (ev)=>{
             const pointer = ev.detail.holding;
             const drag = [parseInt(newItem.style.getPropertyValue("--drag-x")), parseInt(newItem.style.getPropertyValue("--drag-y"))];//pointer.modified;
-            const args = {item, page, items};
 
             //
+            layout[0] = gridSystem.style.getPropertyValue("--layout-c") || layout[0];
+            layout[1] = gridSystem.style.getPropertyValue("--layout-r") || layout[1];
+
+            //
+            const args   = {item, list, items, layout, size};
             const orient = convertPointerPxToOrientPx(relativeToAbsoluteInPx([drag[0], drag[1]], args), args);
-            const CXa = convertOrientPxToCX(orient, args);
+            const CXa    = convertOrientPxToCX(orient, args);
 
             //
             //const prev = [item.cell[0], item.cell[1]];

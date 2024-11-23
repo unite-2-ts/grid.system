@@ -22,11 +22,14 @@ export const setProperty = (target, name, value, importance = "")=>{
 
 //
 export const trackItemState = (element, item, [value, prop])=>{
-    if (prop == "cell") { subscribe(value, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v)); } else
-    if (prop == "id") { element.dataset[prop] = value; } else { element[prop] = value; };
+    if (element) {
+        if (prop == "cell") { subscribe(value, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v)); } else
+        if (prop == "label" && element.matches("span")) { element.innerHTML = value; } else
+        if (prop == "id" && element?.dataset) { element.dataset[prop] = value; } else { element[prop] = value; };
+    }
 
     //
-    element.dispatchEvent(new CustomEvent("u2-item-state-change", {
+    element?.dispatchEvent?.(new CustomEvent("u2-item-state-change", {
         detail: {item, value, prop},
         bubbles: true,
         cancelable: true

@@ -119,7 +119,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             }
 
             //
-            newItem.dataset.dragging = "true";
+            newItem.dataset.dragging = "";
         });
 
         //

@@ -71,13 +71,49 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
         }, (ev)=>{
             if (!newItem.dataset.dragging)
             {
-                grabForDrag(newItem, ev, {
-                    propertyName: "drag",
-                    shifting: [
-                        parseFloat(newItem?.style?.getPropertyValue("--drag-x")) || 0,
-                        parseFloat(newItem?.style?.getPropertyValue("--drag-y")) || 0
-                    ],
-                });
+                const n_coord: [number, number] = [ev?.clientX||0, ev?.clientY||0];
+                if (ev?.pointerId >= 0) {
+                    (newItem as HTMLElement)?.setPointerCapture?.(ev?.pointerId);
+                }
+
+                //
+                const shifting = (ev_l)=>{
+                    if (ev_l?.pointerId == ev?.pointerId) {
+                        const coord: [number, number] = [ev_l?.clientX||0, ev_l?.clientY||0];
+                        const shift: [number, number] = [coord[0] - n_coord[0], coord[1] - n_coord[1]];
+                        if (Math.hypot(...shift) > 10) {
+                            grabForDrag(newItem, ev_l, {
+                                propertyName: "drag",
+                                shifting: [
+                                    parseFloat(newItem?.style?.getPropertyValue("--drag-x")) || 0,
+                                    parseFloat(newItem?.style?.getPropertyValue("--drag-y")) || 0
+                                ],
+                            });
+                        }
+                    }
+                }
+
+                //
+                const releasePointer = (ev_l)=>{
+                    if (ev_l?.pointerId == ev?.pointerId) {
+                        unbind(ev_l);
+                        (newItem as HTMLElement)?.releasePointerCapture?.(ev_l?.pointerId);
+                    }
+                }
+
+                //
+                const unbind = (ev_l)=>{
+                    if (ev_l?.pointerId == ev?.pointerId) {
+                        document.documentElement.removeEventListener("pointermove", shifting);
+                        document.documentElement.removeEventListener("pointercancel", releasePointer);
+                        document.documentElement.removeEventListener("pointerup", releasePointer);
+                    }
+                }
+
+                //
+                document.documentElement.addEventListener("pointermove", shifting);
+                document.documentElement.addEventListener("pointercancel", releasePointer);
+                document.documentElement.addEventListener("pointerup", releasePointer);
             }
         });
 

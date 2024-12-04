@@ -253,7 +253,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
     //
     subscribe(items, (item, index, old)=>{
-        if (item) {
+        if (item && item?.id) {
             const newItem = createItem(item, gridSystem);
             const id = item?.id; newItem.dataset.id = id;
             if (!newItem.classList.contains('u2-grid-item')) {

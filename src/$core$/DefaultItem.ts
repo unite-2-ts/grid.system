@@ -26,7 +26,7 @@ export const trackItemState = (element, item, [value, prop])=>{
         if (prop == "cell") { subscribe(value, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v)); } else
         if (prop == "label" && element.matches("span")) { element.innerHTML = value; } else
         if (prop == "icon") { element[prop] = value; } else
-        if (element?.dataset && typeof prop == "string" && !URL.canParse(prop) && !prop.includes("\/")) { element.dataset[prop] = value; };
+        if (element?.dataset && typeof prop == "string" && !URL.canParse(prop) && !prop.includes("\/") && !prop.includes("#")) { element.dataset[prop] = value; };
     }
 
     //

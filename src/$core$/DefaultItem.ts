@@ -1,5 +1,11 @@
 // @ts-ignore /* @vite-ignore */
-import {subscribe} from "/externals/lib/object.js";
+import {subscribe, makeReactive, makeObjectAssignable} from "/externals/lib/object.js";
+
+// @ts-ignore /* @vite-ignore */
+import {
+    redirectCell
+// @ts-ignore /* @vite-ignore */
+} from "/externals/core/grid.js";
 
 //
 export const setProperty = (target, name, value, importance = "")=>{
@@ -21,7 +27,11 @@ export const setProperty = (target, name, value, importance = "")=>{
 }
 
 //
-export const trackItemState = (element, item, [value, prop])=>{
+export const trackItemState = (element, item, [value, prop], args?)=>{
+    if (item && !item?.cell) { item.cell = makeObjectAssignable(makeReactive([0, 0])); };
+    if (item && args) { item.cell = redirectCell(item?.cell, args); };
+
+    //
     if (element) {
         if (prop == "cell") { subscribe(value, (v,p)=>setProperty(element, ["--cell-x","--cell-y"][parseInt(p)], v)); } else
         if (prop == "label" && element.matches("span")) { element.innerHTML = value; } else

@@ -55,8 +55,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
     });
 
     //
-    setProperty(gridSystem, "--layout-c", layout[0] = gridSystem.style.getPropertyValue("--layout-c") || layout[0]);
-    setProperty(gridSystem, "--layout-r", layout[1] = gridSystem.style.getPropertyValue("--layout-r") || layout[1]);
+    setProperty(gridSystem, "--layout-c", layout[0] = parseInt(gridSystem.style.getPropertyValue("--layout-c") || "0") || layout[0] || 4);
+    setProperty(gridSystem, "--layout-r", layout[1] = parseInt(gridSystem.style.getPropertyValue("--layout-r") || "0") || layout[1] || 8);
 
     //
     const bindInternal = (newItem, item)=>{
@@ -261,10 +261,14 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             }
 
             //
+            setProperty(gridSystem, "--layout-c", layout[0] = parseInt(gridSystem?.style?.getPropertyValue("--layout-c") || "0") || layout[0] || 4);
+            setProperty(gridSystem, "--layout-r", layout[1] = parseInt(gridSystem?.style?.getPropertyValue("--layout-r") || "0") || layout[1] || 8);
+
+            //
             if (!gridSystem?.contains?.(newItem)) {
                 gridSystem?.appendChild?.(newItem);
                 bindInternal(newItem, item);
-                subscribe(item, (state, property)=>trackItemState(newItem, item, [state, property]));
+                subscribe(item, (state, property)=>trackItemState(newItem, item, [state, property], {item, list, items, layout, size}));
             }
 
             //

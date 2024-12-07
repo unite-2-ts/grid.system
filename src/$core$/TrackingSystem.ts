@@ -123,8 +123,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             const pbox = gridSystem?.getBoundingClientRect?.();
 
             //
-            //const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
-            const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
+            const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
+            //const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
             const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
 
             //

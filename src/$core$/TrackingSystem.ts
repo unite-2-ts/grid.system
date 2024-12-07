@@ -179,8 +179,19 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             const CXa    = convertOrientPxToCX(orient, args);
 
             //
-            //const prev = [item.cell[0], item.cell[1]];
-            const cell = redirectCell([Math.round(CXa[0]), Math.round(CXa[1])], args);
+            const clamped = [Math.round(CXa[0]), Math.round(CXa[1])];
+            clamped[0] = Math.max(Math.min(clamped[0], layout[0]-1), 0);
+            clamped[1] = Math.max(Math.min(clamped[1], layout[1]-1), 0);
+
+            //
+            const cell = redirectCell(clamped, args);
+            const prev = [item.cell[0], item.cell[1]];
+
+            //
+            setProperty(newItem, "--cell-x", cell[0]);
+            setProperty(newItem, "--cell-y", cell[1]);
+
+            //
             const animation = newItem.animate(animationSequence(drag, item.cell, cell), {
                 fill: "both",
                 duration: 150,
@@ -201,12 +212,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             }, {once: true}];
 
             // not fact, but for animation
-            setProperty(newItem, "--p-cell-x", item.cell[0]);
-            setProperty(newItem, "--p-cell-y", item.cell[1]);
-
-            //
-            setProperty(newItem, "--cell-x", cell[0]);
-            setProperty(newItem, "--cell-y", cell[1]);
+            setProperty(newItem, "--p-cell-x", prev[0]);
+            setProperty(newItem, "--p-cell-y", prev[1]);
 
             //
             newItem?.addEventListener?.("m-dragstart", ...onShift);

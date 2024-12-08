@@ -82,6 +82,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
                         const coord: [number, number] = [ev_l?.clientX||0, ev_l?.clientY||0];
                         const shift: [number, number] = [coord[0] - n_coord[0], coord[1] - n_coord[1]];
                         if (Math.hypot(...shift) > 10) {
+                            document.documentElement.removeEventListener("pointermove", shifting);
                             grabForDrag(newItem, ev_l, {
                                 propertyName: "drag",
                                 shifting: [

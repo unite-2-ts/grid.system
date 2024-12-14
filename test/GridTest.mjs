@@ -2,6 +2,9 @@
 import {subscribe, makeReactive, makeObjectAssignable} from "/externals/lib/object.js";
 
 // @ts-ignore /* @vite-ignore */
+import agate from "/externals/lib/agate.js"; await agate();
+
+// @ts-ignore /* @vite-ignore */
 import orient from "/externals/core/core.js"; await orient();
 
 // @ts-ignore /* @vite-ignore */

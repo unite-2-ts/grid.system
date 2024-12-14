@@ -8,7 +8,7 @@ import AxGesture, {grabForDrag} from "/externals/lib/interact.js";
 import { observeContentBox } from "/externals/lib/dom.js";
 
 // @ts-ignore
-import { getBoundingOrientBox, orientOf } from "/externals/lib/agate.js";
+import { getBoundingOrientRect, orientOf } from "/externals/lib/agate.js";
 
 //
 import $createItem, { setProperty, trackItemState } from "./DefaultItem";
@@ -74,8 +74,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
                             grabForDrag(newItem, ev_l, {
                                 propertyName: "drag",
                                 shifting: [
-                                    parseFloat(newItem?.style?.getPropertyValue("--os-drag-x")) || 0,
-                                    parseFloat(newItem?.style?.getPropertyValue("--os-drag-y")) || 0
+                                    parseFloat(newItem?.style?.getPropertyValue("--drag-x")) || 0,
+                                    parseFloat(newItem?.style?.getPropertyValue("--drag-y")) || 0
                                 ],
                             });
                         }
@@ -110,8 +110,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{
-            const cbox = ev?.event?.boundingBox || newItem?.getBoundingClientRect?.();
-            const pbox = getBoundingOrientBox?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
+            const cbox = ev?.event?.boundingBox || getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
+            const pbox = getBoundingOrientRect(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 
             //
@@ -127,11 +127,11 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             //
             if (prev[0] != cell[0] || prev[1] != cell[1]) {
                 if (ev?.detail?.holding?.modified != null) {
-                    setProperty(newItem, "--os-drag-x", ev.detail.holding.modified[0] = 0);
-                    setProperty(newItem, "--os-drag-y", ev.detail.holding.modified[1] = 0);
+                    setProperty(newItem, "--drag-x", ev.detail.holding.modified[0] = 0);
+                    setProperty(newItem, "--drag-y", ev.detail.holding.modified[1] = 0);
                 } else {
-                    setProperty(newItem, "--os-drag-x", 0);
-                    setProperty(newItem, "--os-drag-y", 0);
+                    setProperty(newItem, "--drag-x", 0);
+                    setProperty(newItem, "--drag-y", 0);
                 }
                 item.cell = cell;
                 setProperty(newItem, "--p-cell-x", item.cell[0]);
@@ -144,8 +144,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
         //
         newItem.addEventListener("m-dragend", async (ev)=>{
-            const cbox = ev?.event?.boundingBox || newItem?.getBoundingClientRect?.();
-            const pbox = getBoundingOrientBox?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
+            const cbox = ev?.event?.boundingBox || getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
+            const pbox = getBoundingOrientRect?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 
             //
@@ -157,7 +157,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             const CXa  = convertOrientPxToCX(rel, args, orientOf(gridSystem));
 
             //
-            const clamped = [Math.round(CXa[0]), Math.round(CXa[1])];
+            const clamped = [Math.floor(CXa[0]), Math.floor(CXa[1])];
             clamped[0] = Math.max(Math.min(clamped[0], layout[0]-1), 0);
             clamped[1] = Math.max(Math.min(clamped[1], layout[1]-1), 0);
 
@@ -213,11 +213,11 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
                 //
                 if (ev?.detail?.holding?.modified != null) {
-                    setProperty(newItem, "--os-drag-x", ev.detail.holding.modified[0] = 0);
-                    setProperty(newItem, "--os-drag-y", ev.detail.holding.modified[1] = 0);
+                    setProperty(newItem, "--drag-x", ev.detail.holding.modified[0] = 0);
+                    setProperty(newItem, "--drag-y", ev.detail.holding.modified[1] = 0);
                 } else {
-                    setProperty(newItem, "--os-drag-x", 0);
-                    setProperty(newItem, "--os-drag-y", 0);
+                    setProperty(newItem, "--drag-x", 0);
+                    setProperty(newItem, "--drag-y", 0);
                 }
 
                 //

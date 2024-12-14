@@ -54,23 +54,26 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             mouseImmediate: true,
             minHoldTime: 60 * 3600,
             maxHoldTime: 100
-        }, (ev)=>{
+        }, (evc)=>{
+            const ev = evc?.detail || evc;
             if (!newItem.dataset.dragging)
             {
-                const n_coord: [number, number] = [...ev.orient] as [number, number];
+                const n_coord: [number, number] = (ev.orient ? [...ev.orient] : [ev?.clientX || 0, ev?.clientY || 0]) as [number, number];
                 if (ev?.pointerId >= 0) {
                     ev?.capture?.(newItem);
-                    //(newItem as HTMLElement)?.setPointerCapture?.(ev?.pointerId);
+                    if (!ev?.capture) {
+                        (newItem as HTMLElement)?.setPointerCapture?.(ev?.pointerId);
+                    }
                 }
 
                 //
                 const shifting = (evc_l: any)=>{
-                    const ev_l = evc_l.detail;
+                    const ev_l = evc_l?.detail || evc_l;
                     if (ev_l?.pointerId == ev?.pointerId) {
-                        const coord: [number, number] = [...ev_l.orient] as [number, number];
+                        const coord: [number, number] = (ev_l.orient ? [...ev_l.orient] : [ev_l?.clientX || 0, ev_l?.clientY || 0]) as [number, number];
                         const shift: [number, number] = [coord[0] - n_coord[0], coord[1] - n_coord[1]];
                         if (Math.hypot(...shift) > 10) {
-                            ROOT.removeEventListener("ag-pointermove", shifting);
+                            ROOT.removeEventListener("pointermove", shifting);
                             grabForDrag(newItem, ev_l, {
                                 propertyName: "drag",
                                 shifting: [
@@ -95,22 +98,22 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
                 const unbind = (evc_l)=>{
                     const ev_l = evc_l.detail;
                     if (ev_l?.pointerId == ev?.pointerId) {
-                        ROOT.removeEventListener("ag-pointermove", shifting);
-                        ROOT.removeEventListener("ag-pointercancel", releasePointer);
-                        ROOT.removeEventListener("ag-pointerup", releasePointer);
+                        ROOT.removeEventListener("pointermove", shifting);
+                        ROOT.removeEventListener("pointercancel", releasePointer);
+                        ROOT.removeEventListener("pointerup", releasePointer);
                     }
                 }
 
                 //
-                ROOT.addEventListener("ag-pointermove", shifting);
-                ROOT.addEventListener("ag-pointercancel", releasePointer);
-                ROOT.addEventListener("ag-pointerup", releasePointer);
+                ROOT.addEventListener("pointermove", shifting);
+                ROOT.addEventListener("pointercancel", releasePointer);
+                ROOT.addEventListener("pointerup", releasePointer);
             }
         });
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{
-            const cbox = ev?.event?.boundingBox || getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
+            const cbox = getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
             const pbox = getBoundingOrientRect(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 
@@ -144,7 +147,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
         //
         newItem.addEventListener("m-dragend", async (ev)=>{
-            const cbox = ev?.event?.boundingBox || getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
+            const cbox = getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
             const pbox = getBoundingOrientRect?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 

@@ -8,7 +8,7 @@ import AxGesture, {grabForDrag} from "/externals/lib/interact.js";
 import { observeContentBox } from "/externals/lib/dom.js";
 
 // @ts-ignore
-import { getBoundingOrientBox } from "/externals/lib/agate.js";
+import { getBoundingOrientBox, orientOf } from "/externals/lib/agate.js";
 
 //
 import $createItem, { setProperty, trackItemState } from "./DefaultItem";
@@ -120,7 +120,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
             //
             const args = {item, list, items, layout, size};
-            const CXa  = convertOrientPxToCX(rel, args);
+            const CXa  = convertOrientPxToCX(rel, args, orientOf(gridSystem));
             const prev = [item.cell[0], item.cell[1]];
             const cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
 
@@ -153,8 +153,8 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             layout[1] = gridSystem.style.getPropertyValue("--layout-r") || layout[1];
 
             //
-            const args   = {item, list, items, layout, size};
-            const CXa    = convertOrientPxToCX(rel, args);
+            const args = {item, list, items, layout, size};
+            const CXa  = convertOrientPxToCX(rel, args, orientOf(gridSystem));
 
             //
             const clamped = [Math.round(CXa[0]), Math.round(CXa[1])];

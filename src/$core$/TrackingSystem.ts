@@ -5,29 +5,21 @@ import {subscribe} from "/externals/lib/object.js";
 import AxGesture, {grabForDrag} from "/externals/lib/interact.js";
 
 // @ts-ignore /* @vite-ignore */
-import {observeContentBox, unfixedClientZoom, MOCElement} from "/externals/lib/dom.js";
+import { observeContentBox } from "/externals/lib/dom.js";
 
-// @ts-ignore /* @vite-ignore */
-import {
-    redirectCell,
-    relativeToAbsoluteInPx,
-    absolutePxToRelativeInOrientPx,
-    convertOrientPxToCX,
-    animationSequence,
-    convertPointerPxToOrientPx
-// @ts-ignore /* @vite-ignore */
-} from "/externals/core/grid.js";
+// @ts-ignore
+import { getBoundingOrientBox } from "/externals/lib/agate.js";
 
 //
 import $createItem, { setProperty, trackItemState } from "./DefaultItem";
 
-//
-//const whenChangedLayout = (gridSystem, layout)=>{
-    // may be reactive
-    //subscribe([layout, 0], (v)=>setProperty(gridSystem, "--layout-c", v));
-    //subscribe([layout, 1], (v)=>setProperty(gridSystem, "--layout-r", v));
-    //subscribe(layout, (v,p)=>setProperty(gridSystem, ["--layout-c","--layout-r"][parseInt(p)], v));
-//}
+// @ts-ignore /* @vite-ignore */
+import {
+    redirectCell,
+    convertOrientPxToCX,
+    animationSequence,
+// @ts-ignore /* @vite-ignore */
+} from "/externals/core/grid.js";
 
 //
 const getSpan = (el, ax)=>{
@@ -38,15 +30,6 @@ const getSpan = (el, ax)=>{
 
 //
 export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = [], createItem = $createItem)=>{
-    /*subscribe([page, "layout"], (v)=>whenChangedLayout(gridSystem, v));
-    subscribe(page, (value, prop)=>{
-        gridSystem?.dispatchEvent?.(new CustomEvent("u2-grid-state-change", {
-            detail: {page, value, prop},
-            bubbles: true,
-            cancelable: true
-        }));
-    });*/
-
     //
     const size = [0, 0], layout = [4, 8];
     observeContentBox(gridSystem, (boxSize)=>{
@@ -71,23 +54,25 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
         }, (ev)=>{
             if (!newItem.dataset.dragging)
             {
-                const n_coord: [number, number] = [ev?.clientX||0, ev?.clientY||0];
+                const n_coord: [number, number] = [...ev.orient] as [number, number];
                 if (ev?.pointerId >= 0) {
-                    (newItem as HTMLElement)?.setPointerCapture?.(ev?.pointerId);
+                    ev?.capture?.(newItem);
+                    //(newItem as HTMLElement)?.setPointerCapture?.(ev?.pointerId);
                 }
 
                 //
-                const shifting = (ev_l)=>{
+                const shifting = (evc_l: any)=>{
+                    const ev_l = evc_l.detail;
                     if (ev_l?.pointerId == ev?.pointerId) {
-                        const coord: [number, number] = [ev_l?.clientX||0, ev_l?.clientY||0];
+                        const coord: [number, number] = [...ev_l.orient] as [number, number];
                         const shift: [number, number] = [coord[0] - n_coord[0], coord[1] - n_coord[1]];
                         if (Math.hypot(...shift) > 10) {
-                            document.documentElement.removeEventListener("pointermove", shifting);
+                            document.documentElement.removeEventListener("ag-pointermove", shifting);
                             grabForDrag(newItem, ev_l, {
                                 propertyName: "drag",
                                 shifting: [
-                                    parseFloat(newItem?.style?.getPropertyValue("--drag-x")) || 0,
-                                    parseFloat(newItem?.style?.getPropertyValue("--drag-y")) || 0
+                                    parseFloat(newItem?.style?.getPropertyValue("--os-drag-x")) || 0,
+                                    parseFloat(newItem?.style?.getPropertyValue("--os-drag-y")) || 0
                                 ],
                             });
                         }
@@ -95,60 +80,55 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
                 }
 
                 //
-                const releasePointer = (ev_l)=>{
+                const releasePointer = (evc_l)=>{
+                    const ev_l = evc_l.detail;
                     if (ev_l?.pointerId == ev?.pointerId) {
                         unbind(ev_l);
-                        (newItem as HTMLElement)?.releasePointerCapture?.(ev_l?.pointerId);
+                        ev_l?.release?.();
                     }
                 }
 
                 //
-                const unbind = (ev_l)=>{
+                const unbind = (evc_l)=>{
+                    const ev_l = evc_l.detail;
                     if (ev_l?.pointerId == ev?.pointerId) {
-                        document.documentElement.removeEventListener("pointermove", shifting);
-                        document.documentElement.removeEventListener("pointercancel", releasePointer);
-                        document.documentElement.removeEventListener("pointerup", releasePointer);
+                        document.documentElement.removeEventListener("ag-pointermove", shifting);
+                        document.documentElement.removeEventListener("ag-pointercancel", releasePointer);
+                        document.documentElement.removeEventListener("ag-pointerup", releasePointer);
                     }
                 }
 
                 //
-                document.documentElement.addEventListener("pointermove", shifting);
-                document.documentElement.addEventListener("pointercancel", releasePointer);
-                document.documentElement.addEventListener("pointerup", releasePointer);
+                document.documentElement.addEventListener("ag-pointermove", shifting);
+                document.documentElement.addEventListener("ag-pointercancel", releasePointer);
+                document.documentElement.addEventListener("ag-pointerup", releasePointer);
             }
         });
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{
-            const cbox = newItem?.getBoundingClientRect?.();
-            const pbox = gridSystem?.getBoundingClientRect?.();
-
-            //
+            const cbox = ev?.event?.boundingBox || newItem?.getBoundingClientRect?.();
+            const pbox = getBoundingOrientBox?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
-            //const rel : [number, number] = [(cbox.left /*+ cbox.right*/)/1 - pbox.left, (cbox.top /*+ cbox.bottom*/)/1 - pbox.top];
-            const cent: [number, number] = [(rel[0]) / unfixedClientZoom(), (rel[1]) / unfixedClientZoom()]
 
             //
             layout[0] = gridSystem.style.getPropertyValue("--layout-c") || layout[0];
             layout[1] = gridSystem.style.getPropertyValue("--layout-r") || layout[1];
 
             //
-            const args   = {item, list, items, layout, size};
-            const orient = convertPointerPxToOrientPx(cent, args);
-            const CXa    = convertOrientPxToCX(orient, args);
-
-            //
+            const args = {item, list, items, layout, size};
+            const CXa  = convertOrientPxToCX(rel, args);
             const prev = [item.cell[0], item.cell[1]];
             const cell = redirectCell([Math.floor(CXa[0]), Math.floor(CXa[1])], args);
 
             //
             if (prev[0] != cell[0] || prev[1] != cell[1]) {
                 if (ev?.detail?.holding?.modified != null) {
-                    setProperty(newItem, "--drag-x", ev.detail.holding.modified[0] = 0);
-                    setProperty(newItem, "--drag-y", ev.detail.holding.modified[1] = 0);
+                    setProperty(newItem, "--os-drag-x", ev.detail.holding.modified[0] = 0);
+                    setProperty(newItem, "--os-drag-y", ev.detail.holding.modified[1] = 0);
                 } else {
-                    setProperty(newItem, "--drag-x", 0);
-                    setProperty(newItem, "--drag-y", 0);
+                    setProperty(newItem, "--os-drag-x", 0);
+                    setProperty(newItem, "--os-drag-y", 0);
                 }
                 item.cell = cell;
                 setProperty(newItem, "--p-cell-x", item.cell[0]);
@@ -160,15 +140,10 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
         });
 
         //
-        /*newItem.addEventListener("m-dragging", (ev)=>{
-            const pointer = ev.detail.pointer;
-            const current = pointer.current;
-        });*/
-
-        //
         newItem.addEventListener("m-dragend", async (ev)=>{
-            const pointer = ev.detail.holding;
-            const drag = [parseInt(newItem.style.getPropertyValue("--drag-x")), parseInt(newItem.style.getPropertyValue("--drag-y"))];//pointer.modified;
+            const cbox = ev?.event?.boundingBox || newItem?.getBoundingClientRect?.();
+            const pbox = getBoundingOrientBox?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
+            const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 
             //
             layout[0] = gridSystem.style.getPropertyValue("--layout-c") || layout[0];
@@ -176,8 +151,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
             //
             const args   = {item, list, items, layout, size};
-            const orient = convertPointerPxToOrientPx(relativeToAbsoluteInPx([drag[0], drag[1]], args), args);
-            const CXa    = convertOrientPxToCX(orient, args);
+            const CXa    = convertOrientPxToCX(rel, args);
 
             //
             const clamped = [Math.round(CXa[0]), Math.round(CXa[1])];
@@ -193,7 +167,10 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
             setProperty(newItem, "--cell-y", cell[1]);
 
             //
-            const animation = newItem.animate(animationSequence(drag, item.cell, cell), {
+            const animation = newItem.animate(animationSequence([
+                parseInt(newItem.style.getPropertyValue("--drag-x")),
+                parseInt(newItem.style.getPropertyValue("--drag-y"))
+            ], item.cell, cell), {
                 fill: "both",
                 duration: 150,
                 easing: "linear"
@@ -233,11 +210,11 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
                 //
                 if (ev?.detail?.holding?.modified != null) {
-                    setProperty(newItem, "--drag-x", ev.detail.holding.modified[0] = 0);
-                    setProperty(newItem, "--drag-y", ev.detail.holding.modified[1] = 0);
+                    setProperty(newItem, "--os-drag-x", ev.detail.holding.modified[0] = 0);
+                    setProperty(newItem, "--os-drag-y", ev.detail.holding.modified[1] = 0);
                 } else {
-                    setProperty(newItem, "--drag-x", 0);
-                    setProperty(newItem, "--drag-y", 0);
+                    setProperty(newItem, "--os-drag-x", 0);
+                    setProperty(newItem, "--os-drag-y", 0);
                 }
 
                 //
@@ -257,7 +234,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
     }
 
     //
-    const elements: HTMLElement[] = [];//Array.from(items.values()).map((item)=>bindInternal(createItem(item, gridSystem), item));
+    const elements: HTMLElement[] = [];
 
     //
     subscribe(items, (item, index, old)=>{

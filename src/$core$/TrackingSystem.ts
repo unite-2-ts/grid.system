@@ -29,6 +29,9 @@ const getSpan = (el, ax)=>{
 }
 
 //
+const ROOT = document.documentElement;
+
+//
 export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = [], createItem = $createItem)=>{
     //
     const size = [0, 0], layout = [4, 8];
@@ -67,7 +70,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
                         const coord: [number, number] = [...ev_l.orient] as [number, number];
                         const shift: [number, number] = [coord[0] - n_coord[0], coord[1] - n_coord[1]];
                         if (Math.hypot(...shift) > 10) {
-                            document.documentElement.removeEventListener("ag-pointermove", shifting);
+                            ROOT.removeEventListener("ag-pointermove", shifting);
                             grabForDrag(newItem, ev_l, {
                                 propertyName: "drag",
                                 shifting: [
@@ -92,16 +95,16 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
                 const unbind = (evc_l)=>{
                     const ev_l = evc_l.detail;
                     if (ev_l?.pointerId == ev?.pointerId) {
-                        document.documentElement.removeEventListener("ag-pointermove", shifting);
-                        document.documentElement.removeEventListener("ag-pointercancel", releasePointer);
-                        document.documentElement.removeEventListener("ag-pointerup", releasePointer);
+                        ROOT.removeEventListener("ag-pointermove", shifting);
+                        ROOT.removeEventListener("ag-pointercancel", releasePointer);
+                        ROOT.removeEventListener("ag-pointerup", releasePointer);
                     }
                 }
 
                 //
-                document.documentElement.addEventListener("ag-pointermove", shifting);
-                document.documentElement.addEventListener("ag-pointercancel", releasePointer);
-                document.documentElement.addEventListener("ag-pointerup", releasePointer);
+                ROOT.addEventListener("ag-pointermove", shifting);
+                ROOT.addEventListener("ag-pointercancel", releasePointer);
+                ROOT.addEventListener("ag-pointerup", releasePointer);
             }
         });
 

@@ -87,7 +87,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
                 //
                 const releasePointer = (evc_l)=>{
-                    const ev_l = evc_l.detail;
+                    const ev_l = evc_l?.detail || evc_l;
                     if (ev_l?.pointerId == ev?.pointerId) {
                         unbind(ev_l);
                         ev_l?.release?.();
@@ -96,7 +96,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
                 //
                 const unbind = (evc_l)=>{
-                    const ev_l = evc_l.detail;
+                    const ev_l = evc_l?.detail || evc_l;
                     if (ev_l?.pointerId == ev?.pointerId) {
                         ROOT.removeEventListener("pointermove", shifting);
                         ROOT.removeEventListener("pointercancel", releasePointer);

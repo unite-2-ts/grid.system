@@ -113,7 +113,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
         //
         newItem.addEventListener("m-dragstart", (ev)=>{
-            const cbox = getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
+            const cbox = ev?.detail?.event?.boundingBox || getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
             const pbox = getBoundingOrientRect(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 
@@ -147,7 +147,7 @@ export const inflectInGrid = (gridSystem, items, list: string[]|Set<string> = []
 
         //
         newItem.addEventListener("m-dragend", async (ev)=>{
-            const cbox = getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
+            const cbox = ev?.detail?.event?.boundingBox || getBoundingOrientRect(newItem) || newItem?.getBoundingClientRect?.();
             const pbox = getBoundingOrientRect?.(gridSystem) || gridSystem?.getBoundingClientRect?.();
             const rel : [number, number] = [(cbox.left + cbox.right)/2 - pbox.left, (cbox.top + cbox.bottom)/2 - pbox.top];
 
